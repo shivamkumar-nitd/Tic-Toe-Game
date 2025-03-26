@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modern Tic Tac Toe</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+        }
+
+        .game-container {
+            text-align: center;
+            padding: 2rem;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(10px);
+            width: 100%;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            color: #2d3748;
+            margin-bottom: 1.5rem;
+            font-size: clamp(1.8rem, 5vw, 2.5rem);
+        }
+
+        .game-board {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 2rem;
+            width: 100%;
+            max-width: 400px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .cell {
+            width: 100%;
+            padding-bottom: 100%; 
+            position: relative;
+            background: white;
+            border: none;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            background-size: 60%;
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+
+    
+
+        .status {
+            font-size: clamp(1rem, 4vw, 1.5rem);
+            color: #2d3748;
+            margin-bottom: 1.5rem;
+            font-weight: 600;
+        }
+
+        .reset-btn {
+            padding: clamp(10px, 3vw, 12px) clamp(20px, 5vw, 30px);
+            font-size: clamp(0.9rem, 3vw, 1.1rem);
+            background: #4299e1;
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        @media (max-width: 768px) {
+            .game-container {
+                padding: 1.5rem;
+                border-radius: 15px;
+            }
+
+            .game-board {
+                gap: 8px;
+                max-width: 300px;
+            }
+
+            .cell {
+                border-radius: 12px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 10px;
+            }
+
+            .game-container {
+                padding: 1rem;
+                border-radius: 12px;
+            }
+
+            .game-board {
+                gap: 6px;
+                max-width: 280px;
+            }
+
+            .cell {
+                background-size: 50%;
+            }
+
+            .reset-btn {
+                padding: 8px 20px;
+            }
+        }
+
+        @media (max-height: 600px) {
+            body {
+                min-height: 600px;
+                padding-top: 20px;
+                padding-bottom: 20px;
+            }
+        }
+
+        .cell.x {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%234299e1' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cline x1='18' y1='6' x2='6' y2='18'%3E%3C/line%3E%3Cline x1='6' y1='6' x2='18' y2='18'%3E%3C/line%3E%3C/svg%3E");
+        }
+
+        .cell.o {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%2348bb78' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='8'%3E%3C/circle%3E%3C/svg%3E");
+        }
+
+        
+
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <h1>Tic Tac Toe</h1>
+        <div class="status" id="status">Player X's turn</div>
+        <div class="game-board" id="board">
+            <button class="cell" data-cell></button>
+            <button class="cell" data-cell></button>
+            <button class="cell" data-cell></button>
+            <button class="cell" data-cell></button>
+            <button class="cell" data-cell></button>
+            <button class="cell" data-cell></button>
+            <button class="cell" data-cell></button>
+            <button class="cell" data-cell></button>
+            <button class="cell" data-cell></button>
+        </div>
+        <button class="reset-btn hidden" id="resetBtn">Play Again</button>
+    </div>
+
+    <script>
+        const X_CLASS = 'x';
+        const O_CLASS = 'o';
+        const WINNING_COMBINATIONS = [
+            [0, 1, 2], [3, 4, 5], [6, 7, 8], 
+            [0, 3, 6], [1, 4, 7], [2, 5, 8], 
+            [0, 4, 8], [2, 4, 6] 
+        ];
+
+        const cellElements = document.querySelectorAll('[data-cell]');
+        const board = document.getElementById('board');
+        const statusText = document.getElementById('status');
+        const resetButton = document.getElementById('resetBtn');
+        let xTurn = true;
+
+        startGame();
+
+        resetButton.addEventListener('click', startGame);
+
+        function startGame() {
+            xTurn = true;
+            cellElements.forEach(cell => {
+                cell.classList.remove(X_CLASS);
+                cell.classList.remove(O_CLASS);
+                cell.removeEventListener('click', handleClick);
+                cell.addEventListener('click', handleClick, { once: true });
+            });
+            resetButton.classList.add('hidden');
+            statusText.textContent = `Player ${X_CLASS.toUpperCase()}'s turn`;
+        }
+
+        function handleClick(e) {
+            const cell = e.target;
+            const currentClass = xTurn ? X_CLASS : O_CLASS;
+            
+            placeMark(cell, currentClass);
+            
+            if (checkWin(currentClass)) {
+                endGame(false);
+            } else if (isDraw()) {
+                endGame(true);
+            } else {
+                swapTurns();
+                statusText.textContent = `Player ${xTurn ? X_CLASS.toUpperCase() : O_CLASS.toUpperCase()}'s turn`;
+            }
+        }
+
+        function placeMark(cell, currentClass) {
+            cell.classList.add(currentClass);
+        }
+
+        function swapTurns() {
+            xTurn = !xTurn;
+        }
+
+        function checkWin(currentClass) {
+            return WINNING_COMBINATIONS.some(combination => {
+                return combination.every(index => {
+                    return cellElements[index].classList.contains(currentClass);
+                });
+            });
+        }
+
+        function endGame(draw) {
+            if (draw) {
+                statusText.textContent = 'Game ended in a draw!';
+            } else {
+                statusText.textContent = `Player ${xTurn ? X_CLASS.toUpperCase() : O_CLASS.toUpperCase()} wins!`;
+            }
+            resetButton.classList.remove('hidden');
+        }
+
+        function isDraw() {
+            return [...cellElements].every(cell => {
+                return cell.classList.contains(X_CLASS) || cell.classList.contains(O_CLASS);
+            });
+        }
+    </script>
+</body>
+</html>
